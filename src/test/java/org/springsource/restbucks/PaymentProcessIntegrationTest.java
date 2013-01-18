@@ -32,7 +32,7 @@ import org.junit.BeforeClass;
 import org.junit.Test;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.core.io.ClassPathResource;
-import org.springframework.data.rest.webmvc.RepositoryRestMvcConfiguration;
+import org.springframework.data.rest.webmvc.config.RepositoryRestMvcConfiguration;
 import org.springframework.hateoas.Link;
 import org.springframework.hateoas.LinkDiscoverer;
 import org.springframework.hateoas.core.DefaultLinkDiscoverer;
@@ -159,7 +159,7 @@ public class PaymentProcessIntegrationTest {
 
 		log.info("Accessing root resource…");
 
-		MockHttpServletResponse response = mvc.perform(get("/")). //
+		MockHttpServletResponse response = mvc.perform(get("/").accept(MediaType.APPLICATION_JSON)). //
 				andExpect(status().isOk()). //
 				andExpect(linkWithRelIsPresent(ORDERS_REL)). //
 				andReturn().getResponse();
@@ -184,12 +184,14 @@ public class PaymentProcessIntegrationTest {
 		ClassPathResource resource = new ClassPathResource("order.json");
 		byte[] data = Files.readAllBytes(resource.getFile().toPath());
 
-		MockHttpServletResponse result = mvc.perform(post(ordersLink.getHref()).content(data)). //
+		MockHttpServletResponse result = mvc
+				.perform(post(ordersLink.getHref()).content(data).contentType(MediaType.APPLICATION_JSON)). //
 				andExpect(status().isCreated()). //
 				andExpect(header().string("Location", is(notNullValue()))). //
 				andReturn().getResponse();
 
-		return mvc.perform(get(result.getHeader("Location"))).andReturn().getResponse();
+		return mvc.perform(get(result.getHeader("Location")).accept(MediaType.APPLICATION_JSON)). //
+				andReturn().getResponse();
 	}
 
 	/**
@@ -207,7 +209,7 @@ public class PaymentProcessIntegrationTest {
 		log.info("Root resource returned: " + content);
 		log.info(String.format("Found orders link pointing to %s… Following…", ordersLink));
 
-		MockHttpServletResponse response = mvc.perform(get(ordersLink.getHref())). //
+		MockHttpServletResponse response = mvc.perform(get(ordersLink.getHref()).accept(MediaType.APPLICATION_JSON)). //
 				andExpect(status().isOk()). //
 				andReturn().getResponse();
 
@@ -233,7 +235,7 @@ public class PaymentProcessIntegrationTest {
 		log.info(String.format("Picking first order using JSONPath expression %s…", FIRST_ORDER_EXPRESSION));
 		log.info(String.format("Discovered self link pointing to %s… Following", orderLink));
 
-		return mvc.perform(get(orderLink.getHref())). //
+		return mvc.perform(get(orderLink.getHref()).accept(MediaType.APPLICATION_JSON)). //
 				andExpect(linkWithRelIsPresent("self")). //
 				andExpect(linkWithRelIsPresent(CANCEL_REL)). //
 				andExpect(linkWithRelIsPresent(UPDATE_REL)).andExpect(linkWithRelIsPresent(PAYMENT_REL)).//
@@ -272,7 +274,8 @@ public class PaymentProcessIntegrationTest {
 		// Make sure we cannot cheat and cancel the order after it has been payed
 		log.info("Faking a cancel request to make sure it's forbidden…");
 		Link selfLink = links.findLinkWithRel(Link.REL_SELF, content);
-		mvc.perform(get(selfLink.getHref() + "/cancel")).andExpect(status().isNotFound());
+		mvc.perform(get(selfLink.getHref() + "/cancel").accept(MediaType.APPLICATION_JSON)). //
+				andExpect(status().isNotFound());
 
 		return result;
 	}
@@ -305,7 +308,7 @@ public class PaymentProcessIntegrationTest {
 
 			log.info("Poll state of order until receipt is ready…");
 
-			ResultActions action = mvc.perform(get(orderLink.getHref()).headers(headers));
+			ResultActions action = mvc.perform(get(orderLink.getHref()).headers(headers).accept(MediaType.APPLICATION_JSON));
 			pollResponse = action.andReturn().getResponse();
 
 			int status = pollResponse.getStatus();
@@ -369,7 +372,7 @@ public class PaymentProcessIntegrationTest {
 	private void verifyOrderTaken(MockHttpServletResponse response) throws Exception {
 
 		Link orderLink = links.findLinkWithRel(ORDER_REL, response.getContentAsString());
-		MockHttpServletResponse orderResponse = mvc.perform(get(orderLink.getHref())). //
+		MockHttpServletResponse orderResponse = mvc.perform(get(orderLink.getHref()).accept(MediaType.APPLICATION_JSON)). //
 				andExpect(status().isOk()). // //
 				andExpect(linkWithRelIsPresent(Link.REL_SELF)). //
 				andExpect(linkWithRelIsNotPresent(UPDATE_REL)). //
@@ -395,7 +398,8 @@ public class PaymentProcessIntegrationTest {
 		Link cancellationLink = links.findLinkWithRel(CANCEL_REL, content);
 
 		mvc.perform(delete(cancellationLink.getHref())).andExpect(status().isNoContent());
-		mvc.perform(get(selfLink.getHref())).andExpect(status().isNotFound());
+		mvc.perform(get(selfLink.getHref()).accept(MediaType.APPLICATION_JSON)). //
+				andExpect(status().isNotFound());
 	}
 
 	// Helper methods

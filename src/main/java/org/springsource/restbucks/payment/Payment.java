@@ -27,7 +27,7 @@ import org.springsource.restbucks.order.Order;
 @Getter
 @ToString(callSuper = true)
 @NoArgsConstructor
-public abstract class Payment extends AbstractEntity {
+public class Payment extends AbstractEntity {
 
 	@OneToOne(cascade = CascadeType.MERGE)
 	private Order order;

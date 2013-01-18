@@ -24,11 +24,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
 import org.springframework.data.repository.support.DomainClassConverter;
 import org.springframework.data.repository.support.Repositories;
-import org.springframework.data.rest.webmvc.RepositoryRestMvcConfiguration;
-import org.springframework.data.rest.webmvc.ResourceProcessorInvokingHandlerAdapter;
+import org.springframework.data.rest.webmvc.config.RepositoryRestMvcConfiguration;
 import org.springframework.format.support.FormattingConversionService;
 import org.springframework.hateoas.EntityLinks;
-import org.springframework.hateoas.ResourceProcessor;
 import org.springframework.hateoas.config.EnableEntityLinks;
 import org.springframework.http.MediaType;
 import org.springframework.orm.jpa.support.OpenEntityManagerInViewFilter;
@@ -37,7 +35,6 @@ import org.springframework.web.WebApplicationInitializer;
 import org.springframework.web.servlet.config.annotation.ContentNegotiationConfigurer;
 import org.springframework.web.servlet.config.annotation.EnableWebMvc;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurationSupport;
-import org.springframework.web.servlet.mvc.method.annotation.RequestMappingHandlerAdapter;
 import org.springframework.web.servlet.support.AbstractAnnotationConfigDispatcherServletInitializer;
 import org.springsource.restbucks.payment.web.PaymentController;
 import org.springsource.restbucks.support.RepositoryLinkMetadataFactory;
@@ -108,12 +105,12 @@ public class RestbucksWebApplicationInitializer extends AbstractAnnotationConfig
 		 * {@link ResourceProcessor} instances registered in the {@link ApplicationContext}. See
 		 * {@link PaymentOrderResourceProcessor} for example.
 		 */
-		@Bean
-		@Override
-		public RequestMappingHandlerAdapter requestMappingHandlerAdapter() {
-			RequestMappingHandlerAdapter original = super.requestMappingHandlerAdapter();
-			return new ResourceProcessorInvokingHandlerAdapter(original);
-		}
+		// @Bean
+		// @Override
+		// public RequestMappingHandlerAdapter requestMappingHandlerAdapter() {
+		// RequestMappingHandlerAdapter original = super.requestMappingHandlerAdapter();
+		// return new ResourceProcessorInvokingHandlerAdapter(original);
+		// }
 
 		/**
 		 * Registers a {@link DomainClassConverter} to allow usage of domain types as Spring MVC controller method
