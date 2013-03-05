@@ -22,7 +22,6 @@ import org.joda.time.LocalDate;
 import org.joda.time.Months;
 import org.joda.time.Years;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.springsource.restbucks.payment.CreditCard;
 import org.springsource.restbucks.payment.CreditCardNumber;
@@ -53,7 +52,6 @@ public class CreditCardMarshallingTest {
 	}
 
 	@Test
-	@Ignore
 	public void deserializesCreditCardWithOutIdAndWithAppropriateMontshAndYears() throws Exception {
 
 		CreditCard creditCard = mapper.readValue(REFERENCE, CreditCard.class);
