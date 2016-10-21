@@ -20,11 +20,22 @@ import static org.junit.Assert.*;
 import static org.springsource.restbucks.core.Currencies.*;
 import static org.springsource.restbucks.order.Order.Status.*;
 
+import lombok.Getter;
+
+import java.util.ArrayList;
+import java.util.List;
+
 import org.hamcrest.Matchers;
 import org.javamoney.moneta.Money;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
+import org.springframework.context.event.EventListener;
 import org.springsource.restbucks.AbstractIntegrationTest;
+import org.springsource.restbucks.Restbucks;
+import org.springsource.restbucks.payment.OrderPaidEvent;
 
 /**
  * Integration tests for Spring Data based {@link OrderRepository}.
@@ -34,6 +45,17 @@ import org.springsource.restbucks.AbstractIntegrationTest;
 public class OrderRepositoryIntegrationTest extends AbstractIntegrationTest {
 
 	@Autowired OrderRepository repository;
+	@Autowired CollectingEventListener listener;
+
+	@Configuration
+	@Import(Restbucks.class)
+	public static class Config {
+
+		@Bean
+		CollectingEventListener listener() {
+			return new CollectingEventListener();
+		}
+	}
 
 	@Test
 	public void findsAllOrders() {
@@ -50,7 +72,7 @@ public class OrderRepositoryIntegrationTest extends AbstractIntegrationTest {
 		Order order = repository.save(createOrder());
 
 		Iterable<Order> result = repository.findAll();
-		assertThat(result, is(Matchers.<Order> iterableWithSize(before.intValue() + 1)));
+		assertThat(result, is(Matchers.<Order>iterableWithSize(before.intValue() + 1)));
 		assertThat(result, hasItem(order));
 	}
 
@@ -71,7 +93,27 @@ public class OrderRepositoryIntegrationTest extends AbstractIntegrationTest {
 		assertThat(repository.findByStatus(PAID), hasSize(paidBefore + 1));
 	}
 
+	@Test
+	public void throwsOrderPaidEvent() {
+
+		Order order = repository.save(createOrder()).markPaid();
+		assertThat(order.getDomainEvents(), hasItem(instanceOf(OrderPaidEvent.class)));
+
+		repository.save(order);
+		assertThat(listener.getEvents(), hasItem(instanceOf(OrderPaidEvent.class)));
+	}
+
 	public static Order createOrder() {
 		return new Order(new LineItem("English breakfast", Money.of(2.70, EURO)));
+	}
+
+	private static class CollectingEventListener {
+
+		private final @Getter List<Object> events = new ArrayList<>();
+
+		@EventListener
+		public void on(Object event) {
+			this.events.add(event);
+		}
 	}
 }

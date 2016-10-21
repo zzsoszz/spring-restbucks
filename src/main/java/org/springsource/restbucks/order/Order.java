@@ -33,7 +33,8 @@ import javax.persistence.OrderColumn;
 import javax.persistence.Table;
 
 import org.javamoney.moneta.Money;
-import org.springsource.restbucks.core.AbstractEntity;
+import org.springsource.restbucks.core.AbstractAggregateRoot;
+import org.springsource.restbucks.payment.OrderPaidEvent;
 
 /**
  * An order.
@@ -44,7 +45,7 @@ import org.springsource.restbucks.core.AbstractEntity;
 @Getter
 @ToString(exclude = "lineItems")
 @Table(name = "RBOrder")
-public class Order extends AbstractEntity {
+public class Order extends AbstractAggregateRoot {
 
 	private final Location location;
 	private final LocalDateTime orderedDate;
@@ -97,13 +98,16 @@ public class Order extends AbstractEntity {
 	/**
 	 * Marks the {@link Order} as payed.
 	 */
-	public void markPaid() {
+	public Order markPaid() {
 
 		if (isPaid()) {
 			throw new IllegalStateException("Already paid order cannot be paid again!");
 		}
 
+		registerEvent(new OrderPaidEvent(getId()));
+
 		this.status = Status.PAID;
+		return this;
 	}
 
 	/**
